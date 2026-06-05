@@ -1,0 +1,17 @@
+Package: HARMONI
+Type: Package
+Title: Hierarchical Association Resolution via Multivariate Orthogonalized Non-Null Inference
+Version: 0.1.0
+Authors@R: person(given = "Dipta", family = "Dutta", role = c("aut", "cre"), email = "dipta.dutta@nih.gov")
+Description: Joint Bayesian modeling of pooled and subtype-specific PWAS
+    or TWAS association statistics. HARMONI decomposes the observed
+    association pattern into shared and heterogeneity contrasts, estimates
+    posterior support for null, shared, and heterogeneous configurations,
+    and returns Bayesian false discovery summaries together with posterior
+    effect estimates.
+License: GPL-3
+Encoding: UTF-8
+RoxygenNote: 7.3.2
+Suggests:
+    dplyr,
+    MASS

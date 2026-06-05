@@ -1,0 +1,13 @@
+^\.git$
+^\.github$
+^\.gitignore$
+^README\.Rmd$
+^docs$
+^example_output$
+^outputs$
+^results$
+^logs$
+^.*\.Rproj$
+^\.Rproj\.user$
+^\.DS_Store$
+^\._.*$
