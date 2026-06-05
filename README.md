@@ -25,10 +25,14 @@ across a set of pooled and subtype-specific traits. For each feature, it returns
 - posterior effect estimates and uncertainty summaries
 - fitted global hyperparameters and convergence diagnostics
 
-The main package entry point for full PWAS/TWAS workflows is `harmoni()` or its
-original alias `ms_bpwas()`. Lower-level exported functions are also available
-for workflows that already have a matrix of Z statistics, such as the lung
-histology example in `examples/`.
+The most direct workflow starts from an already-computed feature-by-trait table
+of PWAS or TWAS Z statistics. This is the common handoff point after per-trait
+PWAS/TWAS scans have already been run. HARMONI then models those Z statistics
+jointly across user-defined shared and heterogeneity axes.
+
+The full `harmoni()` / `ms_bpwas()` entry point is also available for users who
+want HARMONI to compute PWAS Z statistics directly from GWAS summary statistics,
+prediction weights, and a PLINK LD reference panel.
 
 ## Repository Layout
 
@@ -158,10 +162,174 @@ remotes::install_github("OWNER/HARMONI")
 Replace `OWNER/HARMONI` with the actual GitHub organization or user and
 repository name.
 
-## Quick Start: Full PWAS/TWAS Workflow
+## Quick Start: Already-Computed TWAS/PWAS Z Statistics
 
-Use `harmoni()` when you have subtype GWAS summary statistics, prediction
-weights, and an LD reference panel.
+Use this workflow when you already have one row per feature and one Z-statistic
+column per trait or subtype. The lung histology example is the primary template:
+it starts from a pooled lung cancer TWAS/PWAS column plus LUAD, SQC, and SCLC
+histology-specific columns.
+
+Required table shape:
+
+```text
+ID
+TWAS.Z_lungoverall
+TWAS.Z_luad
+TWAS.Z_sqc
+TWAS.Z_sclc
+BH_FDR_lungoverall
+BH_FDR_luad
+BH_FDR_sqc
+BH_FDR_sclc
+```
+
+Run HARMONI on an already-generated lung table:
+
+```bash
+cd /path/to/HARMONI
+
+Rscript examples/lung_histology_from_twas_table.R \
+  --input=/path/to/lung_histology_twas_table.tsv \
+  --out_dir=example_output/lung_histology_real
+```
+
+On Biowulf, run this on a compute node. For example:
+
+```bash
+sbatch --mem=8g --time=01:00:00 \
+  --output=lung_histology_harmoni_%j.log \
+  --wrap='module load R; cd /data/Dutta_lab/HARMONI; Rscript examples/lung_histology_from_twas_table.R --input=/path/to/lung_histology_twas_table.tsv --out_dir=example_output/lung_histology_real'
+```
+
+The example writes one result set per contrast parameterization:
+
+```text
+current_std_results.tsv
+current_std_summary.tsv
+current_std_config_counts.tsv
+current_std_loadings.tsv
+current_std.rds
+
+orth_overall_results.tsv
+orth_overall_summary.tsv
+orth_overall_config_counts.tsv
+orth_overall_loadings.tsv
+orth_overall.rds
+
+subtype_shared_results.tsv
+subtype_shared_summary.tsv
+subtype_shared_config_counts.tsv
+subtype_shared_loadings.tsv
+subtype_shared.rds
+
+lung_histology_param_summary.tsv
+lung_histology_Sigma0.tsv
+```
+
+The top-level comparison file is:
+
+```text
+example_output/lung_histology_real/lung_histology_param_summary.tsv
+```
+
+Use that file to compare convergence, discovery counts, baseline overlap, and
+HARMONI-only discoveries across contrast definitions.
+
+### Contrast Design for Already-Computed Z Tables
+
+For an already-computed Z table, the analysis has two explicit steps:
+
+1. Arrange the original Z matrix with one column per observed trait.
+2. Choose a contrast/loading matrix that maps those observed traits into
+   modeled HARMONI axes.
+
+In the lung example, the observed coefficients are:
+
+```text
+overall
+luad
+sqc
+sclc
+```
+
+The example evaluates three biologically motivated parameterizations:
+
+- `current_std`: uses the pooled all-lung Z statistic as the shared axis, then
+  adds LUAD-vs-SQC and SCLC-vs-non-SCLC heterogeneity axes.
+- `orth_overall`: uses the same conceptual axes, but orthogonalizes them under
+  the empirical null covariance before fitting HARMONI.
+- `subtype_shared`: uses the average of LUAD, SQC, and SCLC as the shared axis,
+  then adds orthogonalized histology heterogeneity axes.
+
+The core loading definitions are:
+
+```r
+coef_names <- c("overall", "luad", "sqc", "sclc")
+
+shared_overall <- c(1, 0, 0, 0)
+shared_subtype_average <- c(0, 1 / 3, 1 / 3, 1 / 3)
+
+luad_vs_sqc <- c(0, 1, -1, 0)
+sclc_vs_nsclc <- c(0, -0.5, -0.5, 1)
+
+B <- cbind(
+  shared = shared_overall,
+  het_luad_vs_sqc = luad_vs_sqc,
+  het_sclc_vs_nsclc = sclc_vs_nsclc
+)
+rownames(B) <- coef_names
+```
+
+The transformed HARMONI Z matrix is:
+
+```r
+z_harmoni <- z_original %*% Q
+```
+
+where `Q` is either the column-normalized version of `B` or an empirical-null
+orthogonalized version of `B`. Orthogonalization is useful when axes are not
+independent under the null, because HARMONI then fits configuration probabilities
+on axes that are less correlated by construction.
+
+To run a different contrast analysis, add another entry to the `specs` list in
+`examples/lung_histology_from_twas_table.R`. For example, to compare the pooled
+overall axis with a single LUAD-vs-all-other heterogeneity axis:
+
+```r
+specs[["luad_vs_other"]] <- list(
+  shared = c(1, 0, 0, 0),
+  het = cbind(het_1 = c(0, 1, -0.5, -0.5)),
+  primary = "union_all",
+  mode = "orth"
+)
+```
+
+General rules for contrast construction:
+
+- the vector length must equal the number of original Z columns
+- a shared axis should encode the pooled or average disease signal you want to
+  preserve
+- heterogeneity axes should sum to approximately zero across the subtype columns
+  when they are intended to compare subtypes
+- use `mode = "orth"` when comparing multiple non-independent contrasts
+- inspect `*_loadings.tsv` after each run to confirm the transformed axes match
+  the intended scientific question
+
+Run the built-in demo only as a smoke test when a real lung table is not
+available:
+
+```bash
+Rscript examples/lung_histology_from_twas_table.R \
+  --out_dir=example_output/lung_histology_demo
+```
+
+See `docs/lung_histology_example.md` for the full column specification, contrast
+details, output files, and interpretation guidance.
+
+## Advanced Workflow: Full PWAS/TWAS from GWAS Summary Statistics
+
+Use `harmoni()` when you want the package to compute PWAS Z statistics from
+subtype GWAS summary statistics, prediction weights, and an LD reference panel.
 
 ```r
 library(HARMONI)
@@ -189,30 +357,6 @@ head(fit$pip)
 
 The residual non-modeled subtype is computed from the mixture and named
 subtypes when subtype prevalences are supplied.
-
-## Quick Start: Already-Computed TWAS Z Statistics
-
-If you already have a feature-by-trait table of TWAS or PWAS Z statistics, use
-the lower-level functions. The lung histology example is based on the existing
-lung workflow and demonstrates this mode.
-
-Run a built-in demo:
-
-```bash
-Rscript examples/lung_histology_from_twas_table.R \
-  --out_dir=example_output/lung_histology_demo
-```
-
-Run the same workflow on an already-generated lung TWAS table:
-
-```bash
-Rscript examples/lung_histology_from_twas_table.R \
-  --input=/path/to/lung_histology_twas_table.tsv \
-  --out_dir=example_output/lung_histology_real
-```
-
-See `docs/lung_histology_example.md` for the required columns, output files, and
-interpretation details.
 
 ## Main User-Facing Functions
 
