@@ -59,9 +59,9 @@ directory, `git init`, commit, and push directly to a remote repository.
 
 ### Required for Installing the Package
 
-- R version 4.0 or newer. The Biowulf readiness test was run with R 4.5.2.
+- R version 4.0 or newer.
 - Standard R build tools for source-package installation.
-  - Linux/Biowulf: compiler toolchain provided by the R module.
+  - Linux: system compilers and development headers appropriate for building R packages.
   - macOS: Xcode command line tools are usually enough.
   - Windows: Rtools matching your R version.
 - No mandatory CRAN package dependencies for the core package namespace.
@@ -104,28 +104,14 @@ Install them when running those scripts:
 install.packages(c("MASS", "dplyr"))
 ```
 
-### Biowulf Notes
+### Running Larger Analyses
 
-Biowulf blocks `module load R` on the login node for some R modules. Run package
-checks and analysis jobs on a compute node through `sinteractive` or `sbatch`.
-
-Interactive example:
-
-```bash
-sinteractive --mem=8g --time=02:00:00
-module load R
-R
-```
-
-Batch example:
-
-```bash
-sbatch --mem=8g --time=02:00:00 --wrap='module load R; R CMD check HARMONI'
-```
-
-Biowulf may print a reminder to allocate `lscratch` for R jobs. For small
-package installation and toy examples this is usually not necessary, but large
-PWAS/TWAS jobs should use appropriate scratch space and job resources.
+The examples can be run on a laptop or workstation. Larger PWAS/TWAS analyses
+should be run wherever adequate memory, CPU time, and temporary disk space are
+available. On a shared cluster, use the scheduler and resource requests
+appropriate for that system. Keep logs and generated outputs outside the source
+tree or in ignored directories such as `logs/`, `outputs/`, or
+`example_output/`.
 
 ## Installation
 
@@ -193,13 +179,8 @@ Rscript examples/lung_histology_from_twas_table.R \
   --out_dir=example_output/lung_histology_real
 ```
 
-On Biowulf, run this on a compute node. For example:
-
-```bash
-sbatch --mem=8g --time=01:00:00 \
-  --output=lung_histology_harmoni_%j.log \
-  --wrap='module load R; cd /data/Dutta_lab/HARMONI; Rscript examples/lung_histology_from_twas_table.R --input=/path/to/lung_histology_twas_table.tsv --out_dir=example_output/lung_histology_real'
-```
+For large tables, run the same command on a workstation or cluster job with
+enough memory for the number of features and modeled axes.
 
 The example writes one result set per contrast parameterization:
 
@@ -455,13 +436,8 @@ R CMD build HARMONI
 R CMD check HARMONI_0.1.0.tar.gz
 ```
 
-On Biowulf, run the check on a compute node:
-
-```bash
-sbatch --mem=8g --time=01:00:00 \
-  --output=harmoni_check_%j.log \
-  --wrap='module load R; cd /data/Dutta_lab; R CMD build HARMONI; R CMD check HARMONI_0.1.0.tar.gz'
-```
+If you run checks on a cluster, submit the same `R CMD build` and
+`R CMD check` commands through your site's scheduler.
 
 ## Citation
 

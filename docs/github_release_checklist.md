@@ -22,13 +22,7 @@ R CMD build HARMONI
 R CMD check HARMONI_0.1.0.tar.gz
 ```
 
-On Biowulf, run these commands on a compute node:
-
-```bash
-sbatch --mem=8g --time=01:00:00 \
-  --output=harmoni_check_%j.log \
-  --wrap='module load R; cd /data/Dutta_lab; R CMD build HARMONI; R CMD check HARMONI_0.1.0.tar.gz'
-```
+On a cluster, run the same commands through the scheduler used by that system.
 
 ## Example Check
 

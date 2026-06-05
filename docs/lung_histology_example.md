@@ -47,22 +47,9 @@ Rscript examples/lung_histology_from_twas_table.R \
   --out_dir=example_output/lung_histology_real
 ```
 
-On Biowulf:
-
-```bash
-module load R
-Rscript examples/lung_histology_from_twas_table.R \
-  --input=/path/to/lung_histology_twas_table.tsv \
-  --out_dir=/data/Dutta_lab/HARMONI/example_output/lung_histology_real
-```
-
-If the R module cannot be loaded on the login node, submit a batch job:
-
-```bash
-sbatch --mem=8g --time=01:00:00 \
-  --output=lung_histology_example_%j.log \
-  --wrap='module load R; cd /data/Dutta_lab/HARMONI; Rscript examples/lung_histology_from_twas_table.R --input=/path/to/lung_histology_twas_table.tsv --out_dir=example_output/lung_histology_real'
-```
+For large tables, run the same command on a workstation or cluster job with
+enough memory for the number of features and modeled axes. The script writes all
+generated files under the directory passed to `--out_dir`.
 
 The primary output for comparing contrast choices is:
 

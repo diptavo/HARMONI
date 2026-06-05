@@ -12,15 +12,9 @@ Required:
 - a working source-package build environment
 - write access to an R library path
 
-Tested environment:
-
-- Biowulf compute node
-- R 4.5.2
-- HARMONI 0.1.0
-
 Platform notes:
 
-- Linux: use system compilers or the compiler toolchain loaded by the R module.
+- Linux: use system compilers and development headers appropriate for building R packages.
 - macOS: install Xcode command line tools.
 - Windows: install Rtools matching the installed R version.
 
@@ -164,29 +158,14 @@ Required inputs for this mode:
 The lung histology example estimates the null correlation from near-null
 features in an already-computed TWAS table.
 
-## 8. Biowulf Requirements
+## 8. Runtime Requirements for Larger Runs
 
-Use compute nodes for R jobs. Biowulf may block `module load R` on login nodes.
-
-Interactive:
-
-```bash
-sinteractive --mem=8g --time=02:00:00
-module load R
-```
-
-Batch:
-
-```bash
-sbatch --mem=8g --time=02:00:00 --wrap='module load R; Rscript script.R'
-```
-
-For large runs:
+For large runs on a workstation or cluster:
 
 - choose memory based on the number of features and modeled axes
-- allocate local scratch if using large temporary files
+- use local scratch or fast temporary storage if generating large intermediate files
 - write logs to a dedicated `logs/` directory
-- run a smoke test before submitting a full grid
+- run a smoke test before submitting a full analysis grid
 
 ## 9. Minimum Smoke Tests
 
