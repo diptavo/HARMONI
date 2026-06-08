@@ -1,18 +1,13 @@
 # HARMONI
 
-HARMONI is an R package for joint Bayesian analysis of pooled and
-subtype-specific PWAS or TWAS association statistics. It was developed for
-multi-subtype disease settings where a signal may be shared across disease
-subtypes, restricted to one subtype, or heterogeneous across subtypes.
-
-The package name expands to **Hierarchical Association Resolution via
-Multivariate Orthogonalized Non-Null Inference**.
+HARMONI is an method for joint Bayesian analysis of pooled and
+subtype/state-specific molecular association statistics. 
 
 ## What HARMONI Does
 
-Standard PWAS or TWAS analyses test one molecular feature against one trait at a
-time. In cancer and other heterogeneous diseases, that approach can miss signals
-that are diluted in an all-cases analysis or that differ across subtypes.
+Standard molecular association analyses test one molecular feature (gene, protein etc.) against one trait at a
+time. In complex traits and heterogeneous diseases (like cancers, cardiometabolic diseases etc.), that can miss signals
+diluted in an all-cases analysis or that differ across subtypes.
 
 HARMONI jointly models the vector of association Z statistics for each feature
 across a set of pooled and subtype-specific traits. For each feature, it returns:
@@ -26,74 +21,15 @@ across a set of pooled and subtype-specific traits. For each feature, it returns
 - fitted global hyperparameters and convergence diagnostics
 
 The most direct workflow starts from an already-computed feature-by-trait table
-of PWAS or TWAS Z statistics. This is the common handoff point after per-trait
-PWAS/TWAS scans have already been run. HARMONI then models those Z statistics
+of PWAS or TWAS Z statistics. This is the common starting point after per-trait
+molecular association scans have already been run. HARMONI then models those Z statistics
 jointly across user-defined shared and heterogeneity axes.
-
-The full `harmoni()` / `ms_bpwas()` entry point is also available for users who
-want HARMONI to compute PWAS Z statistics directly from GWAS summary statistics,
-prediction weights, and a PLINK LD reference panel.
-
-## Repository Layout
-
-```text
-.
-├── DESCRIPTION                 # R package metadata
-├── NAMESPACE                   # exported functions and S3 methods
-├── R/                          # package implementation
-├── examples/                   # runnable examples
-│   └── lung_histology_from_twas_table.R
-├── docs/                       # detailed user and developer documentation
-│   ├── prerequisites.md
-│   ├── lung_histology_example.md
-│   └── github_release_checklist.md
-├── .Rbuildignore
-├── .gitignore
-└── README.md
-```
-
-This directory is intended to be a standalone GitHub repository. From this
-directory, `git init`, commit, and push directly to a remote repository.
-
-## Prerequisites
 
 ### Required for Installing the Package
 
 - R version 4.0 or newer.
-- Standard R build tools for source-package installation.
-  - Linux: system compilers and development headers appropriate for building R packages.
-  - macOS: Xcode command line tools are usually enough.
-  - Windows: Rtools matching your R version.
-- No mandatory CRAN package dependencies for the core package namespace.
 
-### Required for Full PWAS/TWAS Runs from GWAS Summary Statistics
-
-- PLINK 1.9 or PLINK 2.0 available on `PATH`.
-- A matched LD reference panel in PLINK binary format:
-  - `.bed`
-  - `.bim`
-  - `.fam`
-- GWAS summary statistics with at least:
-  - `SNP`
-  - `A1`
-  - `A2`
-  - `BETA`
-  - `SE`
-  - `P`
-  - `N`
-- Protein or expression prediction models containing:
-  - `protein_id`
-  - `gene`
-  - `chr`
-  - `weights`, a data frame with `SNP`, `A1`, and `weight`
-  - `cv_R2`
-- Consistent genome build, variant identifiers, and allele coding between the
-  GWAS files, prediction weights, and LD reference panel.
-
-### Required for Simulation and Some Analysis Scripts
-
-The package itself is intentionally light, but some simulation and workflow
-scripts use additional R packages:
+### Required for simulations and analysis scripts
 
 - `MASS`, for multivariate normal simulation
 - `dplyr`, for scenario-grid manipulation in some simulation drivers
@@ -104,29 +40,12 @@ Install them when running those scripts:
 install.packages(c("MASS", "dplyr"))
 ```
 
-### Running Larger Analyses
-
-The examples can be run on a laptop or workstation. Larger PWAS/TWAS analyses
-should be run wherever adequate memory, CPU time, and temporary disk space are
-available. On a shared cluster, use the scheduler and resource requests
-appropriate for that system. Keep logs and generated outputs outside the source
-tree or in ignored directories such as `logs/`, `outputs/`, or
-`example_output/`.
 
 ## Installation
 
-### Install from a Local Checkout
-
-From the parent directory of this repository:
 
 ```r
 install.packages("HARMONI", repos = NULL, type = "source")
-```
-
-Or from anywhere:
-
-```r
-install.packages("/path/to/HARMONI", repos = NULL, type = "source")
 ```
 
 ### Build a Source Tarball
@@ -138,17 +57,12 @@ R CMD INSTALL HARMONI_0.1.0.tar.gz
 
 ### Install from GitHub
 
-After pushing this directory to GitHub:
-
 ```r
 install.packages("remotes")
-remotes::install_github("OWNER/HARMONI")
+remotes::install_github("diptavo/HARMONI")
 ```
 
-Replace `OWNER/HARMONI` with the actual GitHub organization or user and
-repository name.
-
-## Quick Start: Already-Computed TWAS/PWAS Z Statistics
+## Quick Start: Already-Computed molecular association (TWAS/PWAS/pQTS) Z-Statistics
 
 Use this workflow when you already have one row per feature and one Z-statistic
 column per trait or subtype. The lung histology example is the primary template:
@@ -438,9 +352,3 @@ R CMD check HARMONI_0.1.0.tar.gz
 
 If you run checks on a cluster, submit the same `R CMD build` and
 `R CMD check` commands through your site's scheduler.
-
-## Citation
-
-If this package is used in a manuscript, cite the associated HARMONI/MS-BPWAS
-method manuscript or preprint once available. Add the final citation to this
-README and to `inst/CITATION` before public release.
