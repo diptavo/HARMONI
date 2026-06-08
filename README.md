@@ -340,15 +340,3 @@ A fitted `harmoni()` object has class `msbpwas` and includes:
 5. Use BFDR thresholds for discovery reporting.
 6. Compare HARMONI discoveries with single-trait baseline analyses.
 7. Report both shared and heterogeneous configuration summaries.
-
-## Development Checks Before Publishing
-
-From the parent directory:
-
-```bash
-R CMD build HARMONI
-R CMD check HARMONI_0.1.0.tar.gz
-```
-
-If you run checks on a cluster, submit the same `R CMD build` and
-`R CMD check` commands through your site's scheduler.
